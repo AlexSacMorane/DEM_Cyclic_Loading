@@ -42,6 +42,7 @@ P_load = 1e5 # Pa
 P_load0 = P_load # save it
 kp = 1e-9 # m.N-1
 k_v_max = 0.00002 #-
+flag_plot_vWalls = True # generate a plotfor debug
 
 # cementation
 P_cementation = P_load*0.1 # Pa
@@ -527,6 +528,10 @@ def checkUnbalanced_load_confinement_ic():
     L_count_bond_cycle = []
     L_p_cycle = []
     L_eps_v_cycle = []
+
+    if flag_plot_vWalls:
+        global L_speed_wall
+        L_speed_wall = []
         
     # user print
     print('Start cycle number '+O.tags['i_cycle']+' /', number_cycles, '('+O.tags['cycle_step']+')')
@@ -752,6 +757,16 @@ def checkUnbalanced():
     """
     # save data
     saveData()
+
+    if flag_plot_vWalls:
+        L_speed_wall.append(np.mean([abs(plate_x_min.state.vel[0]), abs(plate_x_max.state.vel[0]),\
+                                    abs(plate_y_min.state.vel[1]), abs(plate_y_max.state.vel[1]),\
+                                    abs(plate_z_min.state.vel[1]), abs(plate_z_max.state.vel[2])]))
+        fig, (ax1) = plt.subplots(1,1, figsize=(16,9),num=1)
+        ax1.plot(L_speed_wall)
+        ax1.plot([0, len(L_speed_wall)-1], [rMean*k_v_max/O.dt, rMean*k_v_max/O.dt], color='k')
+        fig.savefig('plot/debug_speed_wall.png')
+        plt.close()
 
     # save data but only for the current cycle (unloading-loading)
     global L_unbalanced_cycle, L_confinement_x_cycle, L_confinement_y_cycle, L_confinement_z_cycle, L_count_bond_cycle, L_p_cycle, L_eps_v_cycle
