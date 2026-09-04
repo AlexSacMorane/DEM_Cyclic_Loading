@@ -526,6 +526,7 @@ def checkUnbalanced_load_confinement_ic():
     L_confinement_y_cycle = []
     L_confinement_z_cycle = []
     L_count_bond_cycle = []
+    L_margin_bond_cycle = []
     L_p_cycle = []
     L_eps_v_cycle = []
 
@@ -751,6 +752,32 @@ def count_bond():
 
 #-------------------------------------------------------------------------------
 
+def compute_margin():
+    '''
+    Compute the margin of the bonds before the rupture.
+
+    The maximum between the tensile and shear is considered.
+    '''
+    # compute the margin for the bonds (force/stiffness) 
+    margin_bond = 0
+    counter_margin = 0
+    for i in O.interactions:
+        if isinstance(O.bodies[i.id1].shape, Sphere) and isinstance(O.bodies[i.id2].shape, Sphere):
+            if not i.phys.cohesionBroken :
+                # tensile margin
+                if i.geom.penetrationDepth < 0:
+                    tensile_margin = np.linalg.norm(i.phys.normalForce)/i.phys.normalAdhesion
+                else :
+                    tensile_margin = 0
+                # shear margin 
+                shear_margin = np.linalg.norm(i.phys.shearForce)/(i.phys.shearAdhesion+i.phys.tangensOfFrictionAngle*np.linalg.norm(i.phys.normalForce))
+                # take the maximum (largest potential to crack)
+                margin_bond = margin_bond + max(tensile_margin, shear_margin)
+                counter_margin = counter_margin + 1
+    return margin_bond/counter_margin
+        
+#-------------------------------------------------------------------------------
+
 def checkUnbalanced():
     """
     Look for the equilibrium during the loading phase.
@@ -769,7 +796,7 @@ def checkUnbalanced():
         plt.close()
 
     # save data but only for the current cycle (unloading-loading)
-    global L_unbalanced_cycle, L_confinement_x_cycle, L_confinement_y_cycle, L_confinement_z_cycle, L_count_bond_cycle, L_p_cycle, L_eps_v_cycle
+    global L_unbalanced_cycle, L_confinement_x_cycle, L_confinement_y_cycle, L_confinement_z_cycle, L_count_bond_cycle, L_margin_bond_cycle, L_p_cycle, L_eps_v_cycle
     # track unbalanced in the cycle (should be < 0.1-0.01)
     L_unbalanced_cycle.append(unbalancedForce())
     # track confinement (should be ~ 100%)
@@ -786,6 +813,8 @@ def checkUnbalanced():
     L_eps_v_cycle.append(-(100*((plate_x_max.state.pos[0]-plate_x_min.state.pos[0])-(plate_x_max.state.refPos[0]-plate_x_min.state.refPos[0]))/(plate_x_max.state.refPos[0]-plate_x_min.state.refPos[0])+\
                            100*((plate_y_max.state.pos[1]-plate_y_min.state.pos[1])-(plate_y_max.state.refPos[1]-plate_y_min.state.refPos[1]))/(plate_y_max.state.refPos[1]-plate_y_min.state.refPos[1])+\
                            100*((plate_z_max.state.pos[2]-plate_z_min.state.pos[2])-(plate_z_max.state.refPos[2]-plate_z_min.state.refPos[2]))/(plate_z_max.state.refPos[2]-plate_z_min.state.refPos[2])))
+    # track the margin for the bonds  
+    L_margin_bond_cycle.append(compute_margin())
 
     # plot
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2,2, figsize=(16,9),num=1)
@@ -800,8 +829,12 @@ def checkUnbalanced():
     ax2.set_ylim(ymin=90, ymax=110)
     ax2.set_title('confinements (%)')
     # number of bond
-    ax3.plot(L_count_bond_cycle)
-    ax3.set_title('Number of bond (-)')
+    ax3.plot(L_count_bond_cycle, color='b')
+    ax3.set_title('Bonds')
+    ax3.set_ylabel('Number of bonds (-)', color='b')
+    ax3b = ax3.twinx()
+    ax3b.plot(L_margin_bond_cycle, color='r')
+    ax3b.set_ylabel('Bond margin', color='r')
     # eps_v - p
     ax4.plot(L_eps_v_cycle, L_p_cycle)
     ax4.set_title(r'p (Pa) - $\epsilon_v$ (%)')
