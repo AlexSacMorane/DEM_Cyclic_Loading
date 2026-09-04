@@ -768,9 +768,9 @@ def checkUnbalanced():
                      1/3*(O.forces.f(plate_y_max.id)[1]-O.forces.f(plate_y_min.id)[1])/2/((plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2]))+\
                      1/3*(O.forces.f(plate_z_max.id)[2]-O.forces.f(plate_z_min.id)[2])/2/((plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])))
     # track volumetric strain
-    L_eps_v_cycle.append(100*((plate_x_max.state.pos[0]-plate_x_min.state.pos[0])-(plate_x_max.state.refPos[0]-plate_x_min.state.refPos[0]))/(plate_x_max.state.refPos[0]-plate_x_min.state.refPos[0])+\
-                   100*((plate_y_max.state.pos[1]-plate_y_min.state.pos[1])-(plate_y_max.state.refPos[1]-plate_y_min.state.refPos[1]))/(plate_y_max.state.refPos[1]-plate_y_min.state.refPos[1])+\
-                   100*((plate_z_max.state.pos[2]-plate_z_min.state.pos[2])-(plate_z_max.state.refPos[2]-plate_z_min.state.refPos[2]))/(plate_z_max.state.refPos[2]-plate_z_min.state.refPos[2]))
+    L_eps_v_cycle.append(-(100*((plate_x_max.state.pos[0]-plate_x_min.state.pos[0])-(plate_x_max.state.refPos[0]-plate_x_min.state.refPos[0]))/(plate_x_max.state.refPos[0]-plate_x_min.state.refPos[0])+\
+                           100*((plate_y_max.state.pos[1]-plate_y_min.state.pos[1])-(plate_y_max.state.refPos[1]-plate_y_min.state.refPos[1]))/(plate_y_max.state.refPos[1]-plate_y_min.state.refPos[1])+\
+                           100*((plate_z_max.state.pos[2]-plate_z_min.state.pos[2])-(plate_z_max.state.refPos[2]-plate_z_min.state.refPos[2]))/(plate_z_max.state.refPos[2]-plate_z_min.state.refPos[2])))
 
     # plot
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2,2, figsize=(16,9),num=1)
@@ -782,7 +782,7 @@ def checkUnbalanced():
     ax2.plot(L_confinement_x_cycle)
     ax2.plot(L_confinement_y_cycle)
     ax2.plot(L_confinement_z_cycle)
-    ax2.set_ylim(ymin=0, ymax=150)
+    ax2.set_ylim(ymin=90, ymax=110)
     ax2.set_title('confinements (%)')
     # number of bond
     ax3.plot(L_count_bond_cycle)
@@ -873,7 +873,7 @@ def stopLoad():
     os.mkdir('../Data_Rock_Cyclic_Isotropic/'+O.tags['d.id'])
     shutil.copytree('data','../Data_Rock_Cyclic_Isotropic/'+O.tags['d.id']+'/data')
     shutil.copytree('plot','../Data_Rock_Cyclic_Isotropic/'+O.tags['d.id']+'/plot')
-    shutil.copy('Rock_Isotropic_Isotropic.py','../Data_Rock_Cyclic_Isotropic/'+O.tags['d.id']+'/Rock_Cyclic_Isotropic.py')
+    shutil.copy('Rock_Cyclic_Isotropic.py','../Data_Rock_Cyclic_Isotropic/'+O.tags['d.id']+'/Rock_Cyclic_Isotropic.py')
     shutil.move(O.tags['d.id']+'_report.txt','../Data_Rock_Cyclic_Isotropic/'+O.tags['d.id']+'/'+O.tags['d.id']+'_report.txt')
 
 #-------------------------------------------------------------------------------
