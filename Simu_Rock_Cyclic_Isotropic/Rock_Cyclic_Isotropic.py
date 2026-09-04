@@ -40,7 +40,7 @@ unbalancedForce_criterion_ic = 0.01
 # Walls
 P_load = 1e5 # Pa
 P_load0 = P_load # save it
-kp = 1e-9 # m.N-1
+kp = 5e-9 # m.N-1
 k_v_max = 0.00002 #-
 flag_plot_vWalls = True # generate a plotfor debug
 
@@ -818,9 +818,9 @@ def checkUnbalanced():
                      1/3*(O.forces.f(plate_y_max.id)[1]-O.forces.f(plate_y_min.id)[1])/2/((plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2]))+\
                      1/3*(O.forces.f(plate_z_max.id)[2]-O.forces.f(plate_z_min.id)[2])/2/((plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])))
     # track volumetric strain
-    L_eps_v_cycle.append(-(100*((plate_x_max.state.pos[0]-plate_x_min.state.pos[0])-(plate_x_max.state.refPos[0]-plate_x_min.state.refPos[0]))/(plate_x_max.state.refPos[0]-plate_x_min.state.refPos[0])+\
-                           100*((plate_y_max.state.pos[1]-plate_y_min.state.pos[1])-(plate_y_max.state.refPos[1]-plate_y_min.state.refPos[1]))/(plate_y_max.state.refPos[1]-plate_y_min.state.refPos[1])+\
-                           100*((plate_z_max.state.pos[2]-plate_z_min.state.pos[2])-(plate_z_max.state.refPos[2]-plate_z_min.state.refPos[2]))/(plate_z_max.state.refPos[2]-plate_z_min.state.refPos[2])))
+    L_eps_v_cycle.append(100*((plate_x_max.state.pos[0]-plate_x_min.state.pos[0])-(plate_x_max.state.refPos[0]-plate_x_min.state.refPos[0]))/(plate_x_max.state.refPos[0]-plate_x_min.state.refPos[0])+\
+                         100*((plate_y_max.state.pos[1]-plate_y_min.state.pos[1])-(plate_y_max.state.refPos[1]-plate_y_min.state.refPos[1]))/(plate_y_max.state.refPos[1]-plate_y_min.state.refPos[1])+\
+                         100*((plate_z_max.state.pos[2]-plate_z_min.state.pos[2])-(plate_z_max.state.refPos[2]-plate_z_min.state.refPos[2]))/(plate_z_max.state.refPos[2]-plate_z_min.state.refPos[2]))
     # track the margin for the bonds  
     L_margin_bond_cycle.append(compute_margin())
 
@@ -1007,8 +1007,8 @@ def saveData():
         ax3.plot(L_n_bond)
         ax3.set_title('Number of bond (-)')
 
-        ax4.plot(L_margin_bond_cycle, color='r')
-        ax4.set_ylabel('Bond margin (-)', color='r')
+        ax4.plot(L_margin_bond_cycle)
+        ax4.set_ylabel('Bond margin (-)')
 
         plt.savefig('plot/'+O.tags['d.id']+'.png')
         plt.close()
