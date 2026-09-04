@@ -905,27 +905,18 @@ def stopLoad():
     """
     # close yade
     O.pause()
-    # characterize the dem step
+    # characterize the simulation
     tac = time.perf_counter()
-    hours = (tac-tic)//(60*60)
-    minutes = (tac-tic -hours*60*60)//(60)
-    seconds = int(tac-tic -hours*60*60 -minutes*60)
-    # report
-    simulation_report = open(simulation_report_name, 'a')
-    simulation_report.write("Isotropic loading test : "+str(hours)+" hours "+str(minutes)+" minutes "+str(seconds)+" seconds\n")
-    simulation_report.write(str(count_bond())+" contacts cemented finally\n\n")
-    simulation_report.close()
-    print("Isotropic loading test : "+str(hours)+" hours "+str(minutes)+" minutes "+str(seconds)+" seconds")
-    print('\n'+str(count_bond())+" contacts cemented\n")
-    # characterize the last DEM step and the simulation
     hours = (tac-tic_0)//(60*60)
     minutes = (tac-tic_0 -hours*60*60)//(60)
     seconds = int(tac-tic_0 -hours*60*60 -minutes*60)
     # report
     simulation_report = open(simulation_report_name, 'a')
     simulation_report.write("Simulation time : "+str(hours)+" hours "+str(minutes)+" minutes "+str(seconds)+" seconds\n\n")
+    simulation_report.write(str(count_bond())+" contacts cemented finally\n\n")
     simulation_report.close()
     print("\nSimulation time : "+str(hours)+" hours "+str(minutes)+" minutes "+str(seconds)+" seconds\n")
+    print('\n'+str(count_bond())+" contacts cemented\n")
 
     # save simulation
     os.mkdir('../Data_Rock_Cyclic_Isotropic/'+O.tags['d.id'])
