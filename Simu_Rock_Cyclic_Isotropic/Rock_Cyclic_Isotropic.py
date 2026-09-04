@@ -506,8 +506,6 @@ def checkUnbalanced_load_confinement_ic():
     plate_z_min.state.refPos = plate_z_min.state.pos
     plate_z_max.state.refPos = plate_z_max.state.pos
 
-    O.pause()
-
     # next time, do not call this function anymore, but the next one instead
     iter_0 = O.iter
     checker.command = 'checkUnbalanced()'
@@ -532,8 +530,6 @@ def checkUnbalanced_load_confinement_ic():
         
     # user print
     print('Start cycle number '+O.tags['i_cycle']+' /', number_cycles, '('+O.tags['cycle_step']+')')
-
-    O.pause()
 
 #-------------------------------------------------------------------------------
 
