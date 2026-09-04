@@ -842,7 +842,7 @@ def checkUnbalanced():
     ax3.set_ylabel('Number of bonds (-)', color='b')
     ax3b = ax3.twinx()
     ax3b.plot(L_margin_bond_cycle, color='r')
-    ax3b.set_ylabel('Bond margin', color='r')
+    ax3b.set_ylabel('Bond margin (-)', color='r')
     # eps_v - p
     ax4.plot(L_eps_v_cycle, L_p_cycle)
     ax4.set_title(r'p (Pa) - $\epsilon_v$ (%)')
