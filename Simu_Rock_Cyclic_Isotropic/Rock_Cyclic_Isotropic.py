@@ -520,7 +520,7 @@ def checkUnbalanced_load_confinement_ic():
     O.tags['i_cycle'] = '1'
     O.tags['cycle_step'] = 'unload' # start with 'unload' and then 'load' 
 
-    global L_unbalanced_cycle, L_confinement_x_cycle, L_confinement_y_cycle, L_confinement_z_cycle, L_count_bond_cycle, L_p_cycle, L_eps_v_cycle
+    global L_unbalanced_cycle, L_confinement_x_cycle, L_confinement_y_cycle, L_confinement_z_cycle, L_count_bond_cycle, L_margin_bond_cycle, L_p_cycle, L_eps_v_cycle
     L_unbalanced_cycle = []
     L_confinement_x_cycle = []
     L_confinement_y_cycle = []
@@ -877,6 +877,7 @@ def checkUnbalanced():
             L_confinement_y_cycle = []
             L_confinement_z_cycle = []
             L_count_bond_cycle = []
+            L_margin_bond_cycle = []
             L_p_cycle = []
             L_eps_v_cycle = []
 
