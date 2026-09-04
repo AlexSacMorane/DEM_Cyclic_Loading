@@ -6,4 +6,8 @@ The goal is to model the experiments detailed in [1].
 
 ## Isotropic conditions
 
+![scheme of isotropic loading](images/LoadingIsotropic.png)
+
 ## Triaxial conditions
+
+![scheme of triaxial loading](images/LoadingTriaxial.png)
