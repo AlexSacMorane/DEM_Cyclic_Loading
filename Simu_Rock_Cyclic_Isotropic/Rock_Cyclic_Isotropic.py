@@ -870,6 +870,7 @@ def checkUnbalanced():
         # check if the simulation should continue (number of cycles to do)
         if int(O.tags['i_cycle']) > number_cycles:
             stopLoad()
+            return
         else:
             # reset the trackers
             L_unbalanced_cycle = []
