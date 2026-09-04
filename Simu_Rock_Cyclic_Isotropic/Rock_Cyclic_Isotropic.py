@@ -945,7 +945,8 @@ def addPlotData():
     sy = O.forces.f(plate_y_max.id)[1]/(plate_x_max.state.pos[0]*plate_z_max.state.pos[2])
     sz = O.forces.f(plate_z_max.id)[2]/(plate_x_max.state.pos[0]*plate_y_max.state.pos[1])
     # add data
-    plot.addData(i=O.iter-iter_0, porosity=porosity(), coordination=avgNumInteractions(), unbalanced=unbalancedForce(), counter_bond=count_bond(), \
+    plot.addData(i=O.iter-iter_0, porosity=porosity(), coordination=avgNumInteractions(), unbalanced=unbalancedForce(),\
+                counter_bond=count_bond(), bond_margin=compute_margin(),\
                 Sx=sx, Sy=sy, Sz=sz, \
                 X_plate=plate_x_max.state.pos[0], Y_plate=plate_y_max.state.pos[1], Z_plate=plate_z_max.state.pos[2],\
                 conf_verified=1/3*sz/P_load*100 + 1/3*sx/(P_load)*100 + 1/3*sy/(P_load)*100, \
@@ -964,6 +965,7 @@ def saveData():
     # post-proccess
     L_coordination = []
     L_n_bond = []
+    L_margin_bond = []
     L_sigma_x = []
     L_sigma_y = []
     L_sigma_z = []
@@ -983,26 +985,30 @@ def saveData():
             L_sigma_y.append(data[i][1])
             L_sigma_z.append(data[i][2])
             L_sigma_mean.append(1/3*L_sigma_x[-1]+1/3*L_sigma_y[-1]+1/3*L_sigma_z[-1])
-            L_coordination.append(data[i][7])
-            L_n_bond.append(data[i][8])
-            L_strain_x.append(data[i][11])
-            L_strain_y.append(data[i][12])
-            L_strain_z.append(data[i][13])
+            L_margin_bond.append(data[i][6])
+            L_coordination.append(data[i][8])
+            L_n_bond.append(data[i][9])
+            L_strain_x.append(data[i][12])
+            L_strain_y.append(data[i][13])
+            L_strain_z.append(data[i][14])
             L_vol_strain.append(abs(L_strain_x[-1]+L_strain_y[-1]+L_strain_z[-1]))
 
         # plot
-        fig, ((ax1, ax2, ax3)) = plt.subplots(1,3, figsize=(16,9),num=1)
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2,2, figsize=(16,9),num=1)
 
-        ax1.plot(L_coordination)
-        ax1.set_title('Coordination (-)')
+        ax1.plot(L_vol_strain, L_sigma_mean)
+        ax1.set_title(r'p vs. $\epsilon_v$')
+        ax1.set_xlabel(r'$\epsilon_v$ (%)')
+        ax1.set_ylabel(r'Mean stress (Pa)')
 
-        ax2.plot(L_n_bond)
-        ax2.set_title('Number of bond (-)')
+        ax2.plot(L_coordination)
+        ax2.set_title('Coordination (-)')
 
-        ax3.plot(L_vol_strain, L_sigma_mean)
-        ax3.set_title(r'p vs. $\epsilon_v$')
-        ax3.set_xlabel(r'$\epsilon_v$ (%)')
-        ax3.set_ylabel(r'Mean stress (Pa)')
+        ax3.plot(L_n_bond)
+        ax3.set_title('Number of bond (-)')
+
+        ax4.plot(L_margin_bond_cycle, color='r')
+        ax4.set_ylabel('Bond margin (-)', color='r')
 
         plt.savefig('plot/'+O.tags['d.id']+'.png')
         plt.close()
