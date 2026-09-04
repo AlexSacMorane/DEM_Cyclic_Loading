@@ -1,3 +1,10 @@
+# once YADE is installed (https://yade-dem.org/doc/)
+# command yade -j n_processors -n -x Rock_Cyclic_Isotropic.py
+# the flag -n deactivate the GUI of YADE
+# the flag -x induce the close of the yade environnement at the end of the simulation
+# n_processors is the number of processors used for the simulation
+# see the online doc available
+
 #-------------------------------------------------------------------------------
 #Librairies
 #-------------------------------------------------------------------------------
@@ -55,7 +62,7 @@ tensileCohesion = 2.75e6*factor_strength # Pa
 shearCohesion = 6.6e6*factor_strength # Pa
 
 # Cyclic loading
-number_cycles = 10
+number_cycles = 1
 amplitude_P_cycle = 0.9*P_load
 d_P_d_iteration = P_load/1e5 # try to verify unbalancedForce < 0.1 (the smaller, the better, the more time consuming)
 
