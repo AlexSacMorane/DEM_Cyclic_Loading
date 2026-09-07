@@ -1070,7 +1070,7 @@ def addPlotData():
                 counter_bond=count_bond(), bond_margin=compute_margin(),\
                 Sx=sx, Sy=sy, Sz=sz, \
                 X_plate=plate_x_max.state.pos[0], Y_plate=plate_y_max.state.pos[1], Z_plate=plate_z_max.state.pos[2],\
-                conf_verified=1/3*sz/(P_load)*100 + 1/3*sx/(P_confinement)*100 + 1/3*sy/(P_confinement)*100, \
+                conf_verified=1/3*sx/(P_load)*100 + 1/3*sy/(P_load)*100 + 1/3*sz/(P_load+P_dev)*100, \
                 strain_x=100*(plate_x_max.state.pos[0]-plate_x_max.state.refPos[0])/plate_x_max.state.refPos[0],\
                 strain_y=100*(plate_y_max.state.pos[1]-plate_y_max.state.refPos[1])/plate_y_max.state.refPos[1],\
                 strain_z=100*(plate_z_max.state.pos[2]-plate_z_max.state.refPos[2])/plate_z_max.state.refPos[2])
