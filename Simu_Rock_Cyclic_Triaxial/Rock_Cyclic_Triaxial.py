@@ -1062,9 +1062,9 @@ def addPlotData():
     Save data in plot.
     """
     # add forces applied on wall x and z
-    sx = O.forces.f(plate_x_max.id)[0]/(plate_y_max.state.pos[1]*plate_z_max.state.pos[2])
-    sy = O.forces.f(plate_y_max.id)[1]/(plate_x_max.state.pos[0]*plate_z_max.state.pos[2])
-    sz = O.forces.f(plate_z_max.id)[2]/(plate_x_max.state.pos[0]*plate_y_max.state.pos[1])
+    sx = (O.forces.f(plate_x_max.id)[0]-O.forces.f(plate_x_min.id)[0])/2/(plate_y_max.state.pos[1]*plate_z_max.state.pos[2])
+    sy = (O.forces.f(plate_y_max.id)[1]-O.forces.f(plate_y_min.id)[1])/2/(plate_x_max.state.pos[0]*plate_z_max.state.pos[2])
+    sz = (O.forces.f(plate_z_max.id)[2]-O.forces.f(plate_z_min.id)[2])/2/(plate_x_max.state.pos[0]*plate_y_max.state.pos[1])
     # add data
     plot.addData(i=O.iter-iter_0, porosity=porosity(), coordination=avgNumInteractions(), unbalanced=unbalancedForce(),\
                 counter_bond=count_bond(), bond_margin=compute_margin(),\
