@@ -40,7 +40,7 @@ unbalancedForce_criterion_ic = 0.01
 # Walls
 P_load = 1e5 # Pa
 P_load0 = P_load # save it
-P_confinement = P_load # Pa
+P_dev = 0.2*P_load # Pa
 kp = 5e-9 # m.N-1
 k_v_max = 0.00002 #-
 flag_plot_vWalls = False # generate a plotfor debug
@@ -440,8 +440,76 @@ def cementation():
     # next time, do not call this function anymore, but the next one instead
     checker.command = 'checkUnbalanced_load_confinement_ic()'
     checker.iterPeriod = 200
-    # change the vertical pressure applied
-    O.engines = O.engines[:-1] + [PyRunner(command='controlWalls()', iterPeriod = 1)]
+    # change the stress state applied
+    O.engines = O.engines[:-1] + [PyRunner(command='controlWalls_confinement()', iterPeriod = 1)]
+
+#-------------------------------------------------------------------------------
+
+def controlWalls_confinement():
+    '''
+    Control the walls to applied a defined confinement force.
+
+    The displacement of the wall depends on the force difference. A maximum value is defined.
+    '''
+    Fx = (O.forces.f(plate_x_max.id)[0] - O.forces.f(plate_x_min.id)[0])/2
+    if Fx == 0:
+        plate_x_min.state.pos =  (min([b.state.pos[0]-0.995*b.shape.radius for b in O.bodies if isinstance(b.shape, Sphere)]),
+                                        (plate_y_min.state.pos[1]+plate_y_max.state.pos[1])/2,
+                                        (plate_z_min.state.pos[2]+plate_z_max.state.pos[2])/2)
+        plate_x_max.state.pos =  (max([b.state.pos[0]+0.995*b.shape.radius for b in O.bodies if isinstance(b.shape, Sphere)]),
+                                        (plate_y_min.state.pos[1]+plate_y_max.state.pos[1])/2,
+                                        (plate_z_min.state.pos[2]+plate_z_max.state.pos[2])/2)
+    else :
+        dF = Fx - P_load*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2])
+        v_plate_max = rMean*k_v_max/O.dt
+        v_try_abs = abs(kp*dF)/O.dt
+        # maximal speed is applied to lateral wall
+        if v_try_abs < v_plate_max :
+            plate_x_min.state.vel = (-np.sign(dF)*v_try_abs, 0, 0)
+            plate_x_max.state.vel = ( np.sign(dF)*v_try_abs, 0, 0)
+        else :
+            plate_x_min.state.vel = (-np.sign(dF)*v_plate_max, 0, 0)
+            plate_x_max.state.vel = ( np.sign(dF)*v_plate_max, 0, 0)
+
+    Fy = (O.forces.f(plate_y_max.id)[1] - O.forces.f(plate_y_min.id)[1])/2
+    if Fy == 0:
+        plate_y_min.state.pos =  ((plate_x_min.state.pos[0]+plate_x_max.state.pos[0])/2,
+                                    min([b.state.pos[1]-0.995*b.shape.radius for b in O.bodies if isinstance(b.shape, Sphere)]),
+                                    (plate_z_min.state.pos[2]+plate_z_max.state.pos[2])/2)                    
+        plate_y_max.state.pos =  ((plate_x_min.state.pos[0]+plate_x_max.state.pos[0])/2,
+                                    max([b.state.pos[1]+0.995*b.shape.radius for b in O.bodies if isinstance(b.shape, Sphere)]),
+                                    (plate_z_min.state.pos[2]+plate_z_max.state.pos[2])/2)
+    else :
+        dF = Fy - P_load*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2])
+        v_plate_max = rMean*k_v_max/O.dt
+        v_try_abs = abs(kp*dF)/O.dt
+        # maximal speed is applied to lateral wall
+        if v_try_abs < v_plate_max :
+            plate_y_min.state.vel = (0, -np.sign(dF)*v_try_abs, 0)
+            plate_y_max.state.vel = (0,  np.sign(dF)*v_try_abs, 0)
+        else :
+            plate_y_min.state.vel = (0, -np.sign(dF)*v_plate_max, 0)
+            plate_y_max.state.vel = (0,  np.sign(dF)*v_plate_max, 0)
+
+    Fz = (O.forces.f(plate_z_max.id)[2] - O.forces.f(plate_z_min.id)[2])/2
+    if Fz == 0:
+        plate_z_min.state.pos =  ((plate_x_min.state.pos[0]+plate_x_max.state.pos[0])/2,
+                                  (plate_y_min.state.pos[1]+plate_y_max.state.pos[1])/2,
+                                  min([b.state.pos[2]-0.995*b.shape.radius for b in O.bodies if isinstance(b.shape, Sphere)]))
+        plate_z_max.state.pos =  ((plate_x_min.state.pos[0]+plate_x_max.state.pos[0])/2,
+                                  (plate_y_min.state.pos[1]+plate_y_max.state.pos[1])/2,
+                                  max([b.state.pos[2]+0.995*b.shape.radius for b in O.bodies if isinstance(b.shape, Sphere)]))
+    else :
+        dF = Fz - (P_load)*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])
+        v_plate_max = rMean*k_v_max/O.dt
+        v_try_abs = abs(kp*dF)/O.dt
+        # maximal speed is applied to top wall
+        if v_try_abs < v_plate_max :
+            plate_z_min.state.vel = (0, 0, -np.sign(dF)*v_try_abs)
+            plate_z_max.state.vel = (0, 0,  np.sign(dF)*v_try_abs)
+        else :
+            plate_z_min.state.vel = (0, 0, -np.sign(dF)*v_plate_max)
+            plate_z_max.state.vel = (0, 0,  np.sign(dF)*v_plate_max)
 
 #-------------------------------------------------------------------------------
 
@@ -452,14 +520,56 @@ def checkUnbalanced_load_confinement_ic():
     addPlotData_confinement_ic()
     saveData_ic()
     # check the force applied
-    if abs((O.forces.f(plate_x_max.id)[0]-O.forces.f(plate_x_min.id)[0])/2 - P_confinement*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2]))/\
-            (P_confinement*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2])) > 0.005 :
+    if abs((O.forces.f(plate_x_max.id)[0]-O.forces.f(plate_x_min.id)[0])/2 - P_load*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2]))/\
+            (P_load*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2])) > 0.005 :
         return
-    if abs((O.forces.f(plate_y_max.id)[1]-O.forces.f(plate_y_min.id)[1])/2 - P_confinement*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2]))/\
-            (P_confinement*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2])) > 0.005 :
+    if abs((O.forces.f(plate_y_max.id)[1]-O.forces.f(plate_y_min.id)[1])/2 - P_load*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2]))/\
+            (P_load*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2])) > 0.005 :
         return
-    if abs((O.forces.f(plate_z_max.id)[2]-O.forces.f(plate_z_min.id)[2])/2 - P_confinement*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1]))/\
-            (P_confinement*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])) > 0.005 :
+    if abs((O.forces.f(plate_z_max.id)[2]-O.forces.f(plate_z_min.id)[2])/2 - P_load*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1]))/\
+            (P_load*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])) > 0.005 :
+        return
+    if unbalancedForce() > unbalancedForce_criterion_ic :
+        return
+    # characterize the ic algorithm
+    global tic
+    tac = time.perf_counter()
+    hours = (tac-tic)//(60*60)
+    minutes = (tac-tic -hours*60*60)//(60)
+    seconds = int(tac-tic -hours*60*60 -minutes*60)
+    tic = tac
+
+    # report
+    simulation_report = open(simulation_report_name, 'a')
+    simulation_report.write("Pressure (Confinement) applied : "+str(hours)+" hours "+str(minutes)+" minutes "+str(seconds)+" seconds\n")
+    simulation_report.write(str(O.iter-iter_0)+' Iterations\n')
+    simulation_report.write(str(n_grains)+' grains\n')
+    simulation_report.close()
+    print("\nPressure (Confinement) applied : "+str(hours)+" hours "+str(minutes)+" minutes "+str(seconds)+" seconds\n")
+
+    # next time, do not call this function anymore, but the next one instead
+    checker.command = 'checkUnbalanced_load_deviatoric_ic()'
+
+    # change the stress state applied
+    O.engines = O.engines[:-1] + [PyRunner(command='controlWalls()', iterPeriod = 1)]
+
+#-------------------------------------------------------------------------------
+
+def checkUnbalanced_load_deviatoric_ic():
+    '''
+    Wait to reach the deviatoric pressure targetted.
+    '''
+    addPlotData_deviatoric_ic()
+    saveData_ic()
+    # check the force applied
+    if abs((O.forces.f(plate_x_max.id)[0]-O.forces.f(plate_x_min.id)[0])/2 - P_load*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2]))/\
+            (P_load*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2])) > 0.005 :
+        return
+    if abs((O.forces.f(plate_y_max.id)[1]-O.forces.f(plate_y_min.id)[1])/2 - P_load*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2]))/\
+            (P_load*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2])) > 0.005 :
+        return
+    if abs((O.forces.f(plate_z_max.id)[2]-O.forces.f(plate_z_min.id)[2])/2 - (P_load+P_dev)*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1]))/\
+            ((P_load+P_dev)*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])) > 0.005 :
         return
     if unbalancedForce() > unbalancedForce_criterion_ic :
         return
@@ -490,13 +600,13 @@ def checkUnbalanced_load_confinement_ic():
 
     # report
     simulation_report = open(simulation_report_name, 'a')
-    simulation_report.write("Pressure (Confinement) applied : "+str(hours)+" hours "+str(minutes)+" minutes "+str(seconds)+" seconds\n")
+    simulation_report.write("Pressure (Confinement+Deviatoric) applied : "+str(hours)+" hours "+str(minutes)+" minutes "+str(seconds)+" seconds\n")
     simulation_report.write(str(O.iter-iter_0)+' Iterations\n')
     simulation_report.write(str(n_grains)+' grains\n')
     simulation_report.write('Mean Overlap/Diameter ' + str(m_over_diam) + '\n')
     simulation_report.write('IC generation ends\n\n')
     simulation_report.close()
-    print("\nPressure (Confinement) applied : "+str(hours)+" hours "+str(minutes)+" minutes "+str(seconds)+" seconds\n")
+    print("\nPressure (Confinement+Deviatoric) applied : "+str(hours)+" hours "+str(minutes)+" minutes "+str(seconds)+" seconds\n")
 
     # reset plot (IC done, simulation starts)
     plot.reset()
@@ -569,7 +679,25 @@ def addPlotData_confinement_ic():
     # add data
     plot.addData(i=O.iter-iter_0, porosity=porosity(), coordination=avgNumInteractions(), unbalanced=unbalancedForce(), counter_bond=count_bond(),\
                  Sx=sx, Sy=sy, Sz=sz,\
-                 conf_verified= 1/3*sx/P_confinement*100 + 1/3*sy/P_confinement*100 + 1/3*sz/P_confinement*100, \
+                 conf_verified= 1/3*sx/P_load*100 + 1/3*sy/P_load*100 + 1/3*sz/P_load*100, \
+                 strain_x=100*((plate_x_max.state.pos[0]-plate_x_min.state.pos[0])-(plate_x_max.state.refPos[0]-plate_x_min.state.refPos[0]))/(plate_x_max.state.refPos[0]-plate_x_min.state.refPos[0]),
+                 strain_y=100*((plate_y_max.state.pos[1]-plate_y_min.state.pos[1])-(plate_y_max.state.refPos[1]-plate_y_min.state.refPos[1]))/(plate_y_max.state.refPos[1]-plate_y_min.state.refPos[1]),
+                 strain_z=100*((plate_z_max.state.pos[2]-plate_z_min.state.pos[2])-(plate_z_max.state.refPos[2]-plate_z_min.state.refPos[2]))/(plate_z_max.state.refPos[2]-plate_z_min.state.refPos[2]))
+
+#-------------------------------------------------------------------------------
+
+def addPlotData_deviatoric_ic():
+    """
+    Save data in plot.
+    """
+    # add forces applied on walls
+    sx = (O.forces.f(plate_x_max.id)[0]-O.forces.f(plate_x_min.id)[0])/2/((plate_y_max.state.pos[1]-plate_y_min.state.pos[1])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2]))
+    sy = (O.forces.f(plate_y_max.id)[1]-O.forces.f(plate_y_min.id)[1])/2/((plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2]))
+    sz = (O.forces.f(plate_z_max.id)[2]-O.forces.f(plate_z_min.id)[2])/2/((plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1]))
+    # add data
+    plot.addData(i=O.iter-iter_0, porosity=porosity(), coordination=avgNumInteractions(), unbalanced=unbalancedForce(), counter_bond=count_bond(),\
+                 Sx=sx, Sy=sy, Sz=sz,\
+                 conf_verified= 1/3*sx/P_load*100 + 1/3*sy/P_load*100 + 1/3*sz/(P_load+P_dev)*100, \
                  strain_x=100*((plate_x_max.state.pos[0]-plate_x_min.state.pos[0])-(plate_x_max.state.refPos[0]-plate_x_min.state.refPos[0]))/(plate_x_max.state.refPos[0]-plate_x_min.state.refPos[0]),
                  strain_y=100*((plate_y_max.state.pos[1]-plate_y_min.state.pos[1])-(plate_y_max.state.refPos[1]-plate_y_min.state.refPos[1]))/(plate_y_max.state.refPos[1]-plate_y_min.state.refPos[1]),
                  strain_z=100*((plate_z_max.state.pos[2]-plate_z_min.state.pos[2])-(plate_z_max.state.refPos[2]-plate_z_min.state.refPos[2]))/(plate_z_max.state.refPos[2]-plate_z_min.state.refPos[2]))
@@ -674,7 +802,7 @@ def control_Pload():
 
 def controlWalls():
     '''
-    Control the upper wall to applied a defined confinement force.
+    Control the walls to applied a defined confinement force.
 
     The displacement of the wall depends on the force difference. A maximum value is defined.
     '''
@@ -687,7 +815,7 @@ def controlWalls():
                                         (plate_y_min.state.pos[1]+plate_y_max.state.pos[1])/2,
                                         (plate_z_min.state.pos[2]+plate_z_max.state.pos[2])/2)
     else :
-        dF = Fx - P_confinement*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2])
+        dF = Fx - P_load*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2])
         v_plate_max = rMean*k_v_max/O.dt
         v_try_abs = abs(kp*dF)/O.dt
         # maximal speed is applied to lateral wall
@@ -707,7 +835,7 @@ def controlWalls():
                                     max([b.state.pos[1]+0.995*b.shape.radius for b in O.bodies if isinstance(b.shape, Sphere)]),
                                     (plate_z_min.state.pos[2]+plate_z_max.state.pos[2])/2)
     else :
-        dF = Fy - P_confinement*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2])
+        dF = Fy - P_load*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2])
         v_plate_max = rMean*k_v_max/O.dt
         v_try_abs = abs(kp*dF)/O.dt
         # maximal speed is applied to lateral wall
@@ -727,7 +855,7 @@ def controlWalls():
                                   (plate_y_min.state.pos[1]+plate_y_max.state.pos[1])/2,
                                   max([b.state.pos[2]+0.995*b.shape.radius for b in O.bodies if isinstance(b.shape, Sphere)]))
     else :
-        dF = Fz - P_load*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])
+        dF = Fz - (P_load+P_dev)*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])
         v_plate_max = rMean*k_v_max/O.dt
         v_try_abs = abs(kp*dF)/O.dt
         # maximal speed is applied to top wall
@@ -809,9 +937,9 @@ def checkUnbalanced():
     # track unbalanced in the cycle (should be < 0.1-0.01)
     L_unbalanced_cycle.append(unbalancedForce())
     # track confinement (should be ~ 100%)
-    L_confinement_x_cycle.append((O.forces.f(plate_x_max.id)[0]-O.forces.f(plate_x_min.id)[0])/2/(P_confinement*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2]))*100)
-    L_confinement_y_cycle.append((O.forces.f(plate_y_max.id)[1]-O.forces.f(plate_y_min.id)[1])/2/(P_confinement*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2]))*100)
-    L_confinement_z_cycle.append((O.forces.f(plate_z_max.id)[2]-O.forces.f(plate_z_min.id)[2])/2/(P_load*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1]))*100)
+    L_confinement_x_cycle.append((O.forces.f(plate_x_max.id)[0]-O.forces.f(plate_x_min.id)[0])/2/(P_load*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2]))*100)
+    L_confinement_y_cycle.append((O.forces.f(plate_y_max.id)[1]-O.forces.f(plate_y_min.id)[1])/2/(P_load*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_z_max.state.pos[2]-plate_z_min.state.pos[2]))*100)
+    L_confinement_z_cycle.append((O.forces.f(plate_z_max.id)[2]-O.forces.f(plate_z_min.id)[2])/2/((P_load+P_dev)*(plate_x_max.state.pos[0]-plate_x_min.state.pos[0])*(plate_y_max.state.pos[1]-plate_y_min.state.pos[1]))*100)
     # track bonds number
     L_count_bond_cycle.append(count_bond())
     # track deviatoric stress q
