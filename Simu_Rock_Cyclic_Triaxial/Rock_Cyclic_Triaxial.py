@@ -1144,6 +1144,3 @@ def saveData():
 
 O.run()
 waitIfBatch()
-
-raise ValueError('plot q-eps_dev and not p-epx_v')
-O.pause()
